@@ -1,0 +1,40 @@
+# =============================================================================
+# System-level configuration
+# =============================================================================
+# 3.5D-IC package-level parameters that are NOT specific to one chiplet:
+#   - NoP (inter-chiplet network on the interposer, AIB 2.0 PHY)
+#   - Package floorplan / chiplet count
+#   - Thermal context (used by HotSpot in M3+)
+# Tags:
+#   [paper]   LaMoSys3.5D §VI-A
+#   [AIB2.0]  Intel AIB 2.0 spec, CHIPS Alliance
+#   [est:M9]  to be calibrated
+#   [M3]      used starting in M3 thermal experiments; placeholder for now
+# -----------------------------------------------------------------------------
+
+# --- Package floorplan ----------------------------------------------------
+# Baseline: 4–6 chiplets on a 2.5D interposer. Exact count fixed in Week 2.
+package:
+  n_PC_chiplets:   2          # [est:M9] performance chiplets
+  n_DC_chiplets:   2          # [est:M9] decode chiplets
+  grid_shape:      [2, 2]     # [est:M9] chiplet grid (rows, cols)
+
+# --- Inter-chiplet network (NoP, AIB 2.0) ---------------------------------
+nop:
+  bw_GBs:          800        # [paper]   aggregate NoP bandwidth
+  per_hop_ns:      20         # [AIB2.0]  router + PHY traversal across interposer
+  pJ_per_bit:      0.5        # [AIB2.0]
+  topology:        mesh       # [est:M9]  flat 2D mesh between chiplet edges
+
+# --- Operating temperature window -----------------------------------------
+# Below 85°C: nominal DRAM refresh (tRFI_lowT). Above: refresh halves every
+# 10°C per JEDEC. The simulator's "thermal-aware" mode treats temperatures
+# in [Tnominal, Tcritical] as the search space.
+thermal:
+  T_ambient_C:     45.0       # [est:M9]
+  T_nominal_C:     65.0       # [est:M9] baseline operating temperature
+  T_jedec_C:       85.0       # [JEDEC]  refresh derating threshold
+  T_critical_C:    105.0      # [est:M9] hard thermal cap
+  # HotSpot floorplan and chiplet thermal coupling matrix go here in M3.
+  hotspot_floorplan: null     # [M3]
+  thermal_coupling:  null     # [M3]

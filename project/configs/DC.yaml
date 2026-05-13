@@ -1,0 +1,71 @@
+# =============================================================================
+# Decode Chiplet (DC) configuration
+# =============================================================================
+# Architectural parameters for the memory-optimized chiplet in LaMoSys3.5D.
+# Same DRAM technology + cores as PC, but 2× DRAM stack and a wider/shallower
+# compute fabric. The 2.47× bandwidth advantage over PC (26.2 vs 10.6 TB/s) is
+# what makes DC fast for the decode phase.
+# Tags:
+#   [paper]    LaMoSys3.5D §VI-A, Table II  (arXiv:2512.08731)
+#   [JEDEC]    JEDEC JESD79-4 (DDR4 timing spec)
+#   [est:M9]   estimate; to be calibrated against silicon/HotSpot in M9
+# -----------------------------------------------------------------------------
+
+name: DC
+
+# --- DRAM stack ------------------------------------------------------------
+# 2× the layer count of PC, hence ~2.5× bandwidth and 2× capacity per chiplet.
+dram:
+  n_layers:        8          # [paper]
+  capacity_GB:     64         # [paper]
+  n_banks:         32         # [paper]
+  io_width:        256        # [paper]
+  page_size:       2048       # [est:M9]
+  BL:              8          # [est:M9]
+
+# --- DRAM timing (ns) ------------------------------------------------------
+# Same DRAM technology as PC → same timing constants.
+timing_ns:
+  tRCD:            13.0       # [est:M9]
+  tCAS:            13.0       # [est:M9]
+  tRP:             13.0       # [est:M9]
+  tRFC:            350.0      # [est:M9]
+  tRFI_lowT:       7800.0     # [JEDEC]
+  t_tsv:           1.0        # [est:M9]
+
+# --- Bandwidth -------------------------------------------------------------
+bandwidth:
+  peak_TBs:        26.2       # [paper]  ≈ 2.47× PC
+
+# --- Compute fabric --------------------------------------------------------
+# DC widens horizontally (more PEs) and shallows vertically (fewer cores per
+# PE). Total cores = 32 × 8 = 256, same as PC — what changes is the parallelism
+# topology, not the raw FLOP count.
+compute:
+  n_PE:            32         # [paper]
+  n_cores_per_PE:  8          # [paper]  → 256 cores total
+  freq_MHz:        800        # [est:M9]
+  SA_rows:         64         # [paper]
+  SA_cols:         32         # [paper]
+  baseSA_rows:     8          # [paper]
+  SRAM_per_core_KB: 256       # [paper]
+  peak_TFLOPS:     400        # [paper]  same as PC by design
+
+# --- Energy ----------------------------------------------------------------
+# Same DRAM/SRAM/MAC technology as PC.
+energy:
+  dram_pJ_per_bit: 0.7        # [est:M9]
+  sram_pJ_per_bit: 0.5        # [est:M9]
+  mac_pJ_per_op:   0.5        # [est:M9]
+
+# --- Power / Area ----------------------------------------------------------
+# DC consumes more power (DRAM stack 2×) and is slightly larger.
+budget:
+  peak_power_W:    638        # [paper]
+  area_mm2:        584        # [paper]
+
+# --- Intra-chiplet interconnect -------------------------------------------
+noc:
+  bw_GBs:          200        # [paper]
+  per_hop_ns:      5          # [est:M9]
+  pJ_per_bit:      0.3        # [est:M9]

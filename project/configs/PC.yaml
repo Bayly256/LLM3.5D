@@ -1,0 +1,71 @@
+# =============================================================================
+# Performance Chiplet (PC) configuration
+# =============================================================================
+# Architectural parameters for the compute-optimized chiplet in LaMoSys3.5D.
+# Each parameter is tagged with its source:
+#   [paper]    LaMoSys3.5D §VI-A, Table II  (arXiv:2512.08731)
+#   [JEDEC]    JEDEC JESD79-4 (DDR4 timing spec)
+#   [est:M9]   estimate; to be calibrated against silicon/HotSpot in M9
+#   [derived]  computed from other tagged values
+# -----------------------------------------------------------------------------
+
+name: PC
+
+# --- DRAM stack ------------------------------------------------------------
+dram:
+  n_layers:        4          # [paper]  3D DRAM tiers
+  capacity_GB:     32         # [paper]
+  n_banks:         32         # [paper]  banks per die
+  io_width:        256        # [paper]  bits per bank IO (TSV width)
+  page_size:       2048       # [est:M9] DRAM page size in bytes
+  BL:              8          # [est:M9] burst length
+
+# --- DRAM timing (ns) ------------------------------------------------------
+# tRFI_lowT halves every 10°C above 85°C (JEDEC). Modeled in
+# memory.refresh_interval_ns(). Calibrate against ATSim3.5D / HotSpot in M9.
+timing_ns:
+  tRCD:            13.0       # [est:M9] row → column delay
+  tCAS:            13.0       # [est:M9] column access strobe latency
+  tRP:             13.0       # [est:M9] row precharge
+  tRFC:            350.0      # [est:M9] refresh cycle time
+  tRFI_lowT:       7800.0     # [JEDEC]  refresh interval at T ≤ 85°C
+  t_tsv:           1.0        # [est:M9] TSV traversal under layer-interleaving
+
+# --- Bandwidth -------------------------------------------------------------
+bandwidth:
+  peak_TBs:        10.6       # [paper]  aggregate DRAM bandwidth
+
+# --- Compute fabric --------------------------------------------------------
+compute:
+  n_PE:            16         # [paper]
+  n_cores_per_PE:  16         # [paper]  → 256 cores total
+  freq_MHz:        800        # [est:M9]
+  SA_rows:         64         # [paper]  systolic array rows
+  SA_cols:         32         # [paper]  systolic array cols
+  baseSA_rows:     8          # [paper]  reduced-row mode for small-M GEMV
+  SRAM_per_core_KB: 256       # [paper]
+  peak_TFLOPS:     400        # [paper]  reported peak
+                              # NOTE: computed from SA × cores × freq × 2 gives
+                              # 838 TFLOPS (2.1× higher). Discrepancy tracked
+                              # in week_1_summary.md; calibrate in M9.
+
+# --- Energy ----------------------------------------------------------------
+# Used by cost_model.{memory,compute,comm}; calibrated in M9 against McPAT
+# (compute, SRAM) and CACTI-3DD (DRAM stack).
+energy:
+  dram_pJ_per_bit: 0.7        # [est:M9, CACTI-3DD class]
+  sram_pJ_per_bit: 0.5        # [est:M9, McPAT class]
+  mac_pJ_per_op:   0.5        # [est:M9]
+
+# --- Power / Area ----------------------------------------------------------
+# Reported in paper Table II; used in M8 power model + M9 area budget check.
+budget:
+  peak_power_W:    438        # [paper]
+  area_mm2:        546        # [paper]
+
+# --- Intra-chiplet interconnect -------------------------------------------
+# Inter-chiplet (NoP) and interposer details live in system.yaml.
+noc:
+  bw_GBs:          200        # [paper]  aggregate NoC bandwidth
+  per_hop_ns:      5          # [est:M9] router + PHY traversal
+  pJ_per_bit:      0.3        # [est:M9]
